@@ -23,14 +23,19 @@ var action=params.get('action');
 var title=decodeURIComponent(params.get('title')||'document');
 var webhookBase='https://build.twin.so/triggers/';
 var webhookPath=action==='goodnotes'?'goodnotes_action/webhook':'delete_action/webhook';
-// Append params to URL since no-cors prevents JSON body parsing
-var queryStr='?page_id='+encodeURIComponent(pageId)+'&action='+encodeURIComponent(action)+'&title='+encodeURIComponent(title);
-var url=webhookBase+webhookPath+queryStr;
+var url=webhookBase+webhookPath;
 document.getElementById('status').textContent=action==='goodnotes'?'Sending to GoodNotes and removing from Notion...':'Deleting from Notion...';
-fetch(url,{method:'POST',mode:'no-cors'}).then(function(){
-document.getElementById('card').innerHTML='<h1 style="color:#16a34a">&#10003; Done!</h1><p>'+(action==='goodnotes'?title+' has been sent to GoodNotes and will be removed from Notion.':title+' has been deleted from Notion.')+'</p><p style="font-size:13px;margin-top:16px;color:#94a3b8">You can close this tab.</p>';
+// Send as text/plain with JSON body â text/plain is allowed with no-cors and Twin reads body as JSON
+var body=JSON.stringify({page_id:pageId,action:action,title:title});
+fetch(url,{
+  method:'POST',
+  mode:'no-cors',
+  headers:{'Content-Type':'text/plain'},
+  body:body
+}).then(function(){
+  document.getElementById('card').innerHTML='<h1 style="color:#16a34a">&#10003; Done!</h1><p>'+(action==='goodnotes'?title+' has been sent to GoodNotes and will be removed from Notion.':title+' has been deleted from Notion.')+'</p><p style="font-size:13px;margin-top:16px;color:#94a3b8">You can close this tab.</p>';
 }).catch(function(err){
-document.getElementById('card').innerHTML='<h1 style="color:#dc2626">&#10007; Error</h1><p>Something went wrong. Please try again.</p><p style="font-size:12px;color:#94a3b8">'+err.message+'</p>';
+  document.getElementById('card').innerHTML='<h1 style="color:#dc2626">Error</h1><p>Something went wrong. Please try again.</p><p style="font-size:12px;color:#94a3b8">'+err.message+'</p>';
 });
 </script>
 </body>
